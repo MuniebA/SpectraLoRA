@@ -38,7 +38,8 @@ SpectraLoRA/
 │
 ├── experiments/                # Execution Scripts
 │   ├── train.py                # Phase 4: Training Loop & Context Patching
-│   └── evaluate.py             # Phase 4: Physics-Aware Evaluation Metrics
+│   ├── evaluate.py             # Phase 4: Physics-Aware Evaluation Metrics
+|   └── demo_inference.py       # Phase 5: A simple script to test one image
 │
 ├── requirements.txt            # Dependencies
 └── README.md                   # This file
@@ -113,9 +114,9 @@ If you use this code for your research, please cite:
 
 ```bibtex
 @software{spectralora2026,
-  author = {Your Name},
+  author = {Munieb Abdelrahman},
   title = {SpectraLoRA: Band-Specific Low-Rank Adaptation for Geospatial Foundation Models},
   year = {2026},
-  url = {[https://github.com/MuniebA/spectra-lora](https://github.com/yourusername/spectra-lora)}
+  url = {[[https://github.com/MuniebA/spectra-lora](https://github.com/yourusername/spectra-lora)](https://github.com/MuniebA/SpectraLoRA)}
 }
 ```
