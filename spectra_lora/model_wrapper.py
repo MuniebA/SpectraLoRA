@@ -3,6 +3,7 @@ import os
 import sys
 import importlib.util
 from huggingface_hub import hf_hub_download
+from .layers import SpectraLoRALayer
 from .config import SpectraConfig
 
 """
@@ -91,3 +92,68 @@ def load_prithvi_model(
     print(f"✅ Model Loaded. Missing keys (expected for fine-tuning): {len(msg.missing_keys)}")
     
     return model
+
+"""
+This function will take this loaded model, find the attention layers, and replace them with our SpectraLoRALayer
+"""
+def inject_spectra_lora(model: torch.nn.Module, config: SpectraConfig = SpectraConfig):
+    """
+    The Surgeon Function (Phase 3, Step 6).
+    Walks through the Prithvi model and replaces specific Linear layers 
+    with our physics-aware SpectraLoRALayer.
+    
+    Args:
+        model (nn.Module): The loaded Prithvi Vision Transformer.
+        config (SpectraConfig): Configuration for the adapters.
+    
+    Returns:
+        model (nn.Module): The modified model, ready for training.
+    """
+    print("✨ SpectraLoRA: Beginning surgery on the model...")
+    
+    # Counter to track how many layers we modified
+    layers_modified = 0
+    
+    # We iterate through all named modules in the network
+    # The Prithvi ViT structure usually names attention blocks like:
+    # blocks.0.attn.qkv (Query-Key-Value) OR blocks.0.attn.q_bias, etc.
+    # We specifically target the ATTENTION LAYERS.
+    
+    # Note: Prithvi/ViT implementation often combines QKV into one layer.
+    # Or separate Q, K, V layers. We need to be robust.
+    # For standard ViT (timm style), it's often 'attn.qkv' or 'attn.proj'.
+    
+    for name, module in model.named_children():
+        # Recursive helper to dig deep into the network
+        _recursive_injection(model, name, module, config, counter_ref=[0])
+        
+    print(f"✅ Surgery Complete. Injected SpectraLoRA into {layers_modified} layers.")
+    return model
+
+def _recursive_injection(parent_module, child_name, child_module, config, counter_ref):
+    """
+    Helper function to recursively search for Linear layers to replace.
+    """
+    
+    # 1. Base Case: If the module has children, keep digging
+    if len(list(child_module.children())) > 0:
+        for name, grandchild in child_module.named_children():
+            _recursive_injection(child_module, name, grandchild, config, counter_ref)
+            
+    # 2. Check if this module is a Target Layer
+    # We generally target 'qkv' (Query-Key-Value) or 'proj' (Output Projection) in Attention.
+    # We want to catch strings like "blocks.0.attn.qkv"
+    elif isinstance(child_module, torch.nn.Linear):
+        if "attn" in child_name or "qkv" in child_name or "proj" in child_name:
+            
+            # 3. THE SWAP (The "Surgery")
+            print(f"   -> Injecting LoRA into: {child_name}")
+            
+            # Create our custom layer, wrapping the original one
+            # This automatically freezes the original weights inside __init__
+            new_layer = SpectraLoRALayer(child_module, config)
+            
+            # Replace it in the parent
+            setattr(parent_module, child_name, new_layer)
+            
+            counter_ref[0] += 1
