@@ -117,6 +117,6 @@ If you use this code for your research, please cite:
   author = {Munieb Abdelrahman},
   title = {SpectraLoRA: Band-Specific Low-Rank Adaptation for Geospatial Foundation Models},
   year = {2026},
-  url = {[[https://github.com/MuniebA/spectra-lora](https://github.com/yourusername/spectra-lora)](https://github.com/MuniebA/SpectraLoRA)}
+  url = {[https://github.com/MuniebA/spectra-lora](https://github.com/MuniebA/SpectraLoRA)}
 }
 ```
