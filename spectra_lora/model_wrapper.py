@@ -190,8 +190,8 @@ def _recursive_injection(parent_module, child_name, child_module, config, counte
             counter_ref[0] += 1
             
         # --- CASE B: Projection Layer (Output of Attention) ---
-        elif "proj" in child_name:
-            print(f"   -> 💉 Injecting LoRA into PROJ: {child_module.in_features} -> {child_module.out_features}")
-            new_layer = SpectraLoRALayer(child_module, config)
-            setattr(parent_module, child_name, new_layer)
-            counter_ref[0] += 1
+        # elif "proj" in child_name:
+        #     print(f"   -> 💉 Injecting LoRA into PROJ: {child_module.in_features} -> {child_module.out_features}")
+        #     new_layer = SpectraLoRALayer(child_module, config)
+        #     setattr(parent_module, child_name, new_layer)
+        #     counter_ref[0] += 1
