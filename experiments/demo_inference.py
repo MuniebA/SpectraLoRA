@@ -4,6 +4,7 @@ import numpy as np
 import os
 import sys
 
+#works
 # Ensure we can import the library from the parent directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
