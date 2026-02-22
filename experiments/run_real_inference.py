@@ -57,7 +57,7 @@ def load_real_tiff(path):
 
 def main():
     # 1. Settings
-    tiff_path = r"C:\Users\dev\Desktop\SpectraLoRA\timeseries_001_2022-01.tif"
+    tiff_path = r"prithvi_test_sample.tif"
     device = torch.device("cpu")
     
     if not os.path.exists(tiff_path):
