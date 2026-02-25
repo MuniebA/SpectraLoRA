@@ -48,8 +48,8 @@ def create_chips(input_tiff, output_dir, prefix, chip_size=224, max_chips=10):
 if __name__ == "__main__":
     # Our two new master files and a prefix for their chip names
     master_files = [
-        ("master_stack_northwest.tif", "nw"),
-        ("master_stack_east.tif", "east")
+        ("master_test_doha.tif", "doha"),
+        ("master_test_southkhartoum.tif", "skh")
     ]
     
     # NEW FOLDER: Keep test data separate from training data!

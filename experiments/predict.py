@@ -7,6 +7,7 @@ import rasterio
 import os
 import sys
 import random
+import math
 
 # Ensure library is found
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -20,7 +21,26 @@ from spectra_lora import (
 )
 
 # Import the context patcher and decoder from train
-from train import SpectraContext, patch_model_for_context, SimpleDecoder
+from train import SpectraContext, patch_model_for_context
+
+# --- 4-CLASS DECODER ---
+class SimpleDecoder(nn.Module):
+    def __init__(self, embed_dim=768, num_classes=4): # UPGRADED TO 4
+        super().__init__()
+        self.decode = nn.Sequential(
+            nn.Conv2d(embed_dim, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=16, mode='bilinear', align_corners=False),
+            nn.Conv2d(256, num_classes, kernel_size=1)
+        )
+
+    def forward(self, x):
+        x = x[:, 1:, :] 
+        B, N, C = x.shape
+        H = W = int(math.sqrt(N)) 
+        x = x.transpose(1, 2).reshape(B, C, H, W) 
+        return self.decode(x)
 
 def load_chip(filepath):
     """Loads a 6-band chip and prepares it for the model and visualization."""
@@ -50,7 +70,7 @@ def run_visual_prediction(chip_path):
     encoder = load_prithvi_model()
     encoder = inject_spectra_lora(encoder)
     encoder = patch_model_for_context(encoder)
-    decoder = SimpleDecoder(num_classes=3)
+    decoder = SimpleDecoder(num_classes=4)
     model = nn.Sequential(encoder, decoder).to(device)
     
     # 2. Load Trained Weights
@@ -85,15 +105,15 @@ def run_visual_prediction(chip_path):
     ax1.axis('off')
     
     # Plot 2: AI Prediction
-    # Classes: 0=Barren/Mixed (Gray), 1=Vegetation (Green), 2=Water (Blue)
-    cmap = ListedColormap(['#d3d3d3', '#2ca02c', '#1f77b4'])
-    im = ax2.imshow(prediction, cmap=cmap, vmin=0, vmax=2)
-    ax2.set_title(f"SpectraLoRA Prediction\nContext (NDVI: {z[0,0]:.2f}, NDWI: {z[0,2]:.2f})")
+    # 0: Barren (Light Gray), 1: Vegetation (Green), 2: Water (Blue), 3: Urban (Red)
+    cmap = ListedColormap(['#d3d3d3', '#2ca02c', '#1f77b4', '#d62728'])
+    im = ax2.imshow(prediction, cmap=cmap, vmin=0, vmax=3)
+    ax2.set_title(f"SpectraLoRA Prediction\nContext (NDVI: {z[0,0]:.2f}, NDWI: {z[0,2]:.2f}, NDBI: {z[0,3]:.2f})")
     ax2.axis('off')
     
     # Legend
-    cbar = plt.colorbar(im, ax=ax2, ticks=[0.33, 1, 1.66], fraction=0.046, pad=0.04)
-    cbar.ax.set_yticklabels(['Barren', 'Vegetation', 'Water'])
+    cbar = plt.colorbar(im, ax=ax2, ticks=[0.375, 1.125, 1.875, 2.625], fraction=0.046, pad=0.04)
+    cbar.ax.set_yticklabels(['Barren', 'Vegetation', 'Water', 'Urban'])
     
     plt.tight_layout()
     plt.show()

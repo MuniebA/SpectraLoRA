@@ -42,20 +42,25 @@ class RealSatelliteDataset(Dataset):
     def __getitem__(self, idx):
         path = os.path.join(self.folder_path, self.files[idx])
         with rasterio.open(path) as src:
-            # Read all 6 bands and normalize [0, 1]
             img = src.read().astype(np.float32) / 10000.0 
             
         img_tensor = torch.from_numpy(img)
         
-        # --- GENERATE PSEUDO-LABELS FOR TRAINING ---
-        # 0: Barren/Mixed, 1: Vegetation, 2: Water
-        red, nir, green = img_tensor[2], img_tensor[3], img_tensor[1]
+        # --- SMARTER 4-CLASS PSEUDO-LABELS ---
+        # 0: Barren, 1: Vegetation, 2: Water, 3: Urban
+        blue, green, red = img_tensor[0], img_tensor[1], img_tensor[2]
+        nir, swir1 = img_tensor[3], img_tensor[4]
+        
         ndvi = (nir - red) / (nir + red + 1e-8)
         ndwi = (green - nir) / (green + nir + 1e-8)
+        ndbi = (swir1 - nir) / (swir1 + nir + 1e-8)
         
         mask = torch.zeros((224, 224), dtype=torch.long)
-        mask[ndvi > 0.15] = 1  # Moderate vegetation threshold
-        mask[(ndwi > 0.1) & (ndvi <= 0.15)] = 2 # Water threshold
+        
+        # STRICTER Thresholds to force the model to learn shapes
+        mask[ndvi > 0.25] = 1                            # Definite Vegetation
+        mask[ndwi > 0.15] = 2                            # Definite Water
+        mask[(ndbi > 0.05) & (mask == 0)] = 3            # Urban (if not already water/plant)
         
         return img_tensor, mask
 
@@ -64,7 +69,7 @@ class RealSatelliteDataset(Dataset):
 # -------------------------------------------------------------------------
 class SimpleDecoder(nn.Module):
     """ Projects Prithvi's 1D tokens back into a 2D Segmentation Map """
-    def __init__(self, embed_dim=768, num_classes=3):
+    def __init__(self, embed_dim=768, num_classes=4):
         super().__init__()
         self.decode = nn.Sequential(
             nn.Conv2d(embed_dim, 256, kernel_size=3, padding=1),
@@ -118,7 +123,7 @@ def train_spectra_lora():
     encoder = inject_spectra_lora(encoder)
     encoder = patch_model_for_context(encoder)
     
-    decoder = SimpleDecoder(num_classes=3)
+    decoder = SimpleDecoder(num_classes=4)
     
     # Combine them
     model = nn.Sequential(encoder, decoder).to(device)
@@ -133,7 +138,7 @@ def train_spectra_lora():
     dataloader = DataLoader(dataset, batch_size=2, shuffle=True) # Small batch for laptops
     
     model.train()
-    num_epochs = 5
+    num_epochs = 20
     
     for epoch in range(num_epochs):
         print(f"\n🌍 Epoch {epoch+1}/{num_epochs}")
