@@ -1,0 +1,44 @@
+site_name: SpectraLoRA
+site_description: Physics-Aware Parameter-Efficient Fine-Tuning for Geospatial Foundation Models.
+site_author: Munieb Abdelrahman
+repo_url: https://github.com/MuniebA/SpectraLoRA
+repo_name: MuniebA/SpectraLoRA
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+
+nav:
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - The Physics Engine: physics_engine.md
+  - API Reference: api_reference.md
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+      
