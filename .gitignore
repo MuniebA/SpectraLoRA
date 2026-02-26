@@ -3,7 +3,8 @@ old_dataset_224x224
 old_test_dataset_224x224
 stalite_images
 test_dataset_224x224
-predictions_output
 spectra_lora_weights.pth
 data_creation
 .gitignore
+dist
+spectralora.egg-info
