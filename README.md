@@ -1,7 +1,7 @@
 # SpectraLoRA: Physics-Aware Fine-Tuning for Geospatial Foundation Models
 
 ![Status](https://img.shields.io/badge/Status-Research_Prototype-blue)
-![Python](https://img.shields.io/badge/Python-3.9%2B-green)
+![Python](https://img.shields.io/badge/Python-3.8%2B-green)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-red)
 
 **SpectraLoRA** is a specialized Parameter-Efficient Fine-Tuning (PEFT) library designed for multispectral satellite imagery. Unlike standard LoRA, which treats all input channels equally, SpectraLoRA introduces a **Physics-Aware Gating Mechanism** that dynamically routes information to specialized adapters based on the spectral signature of the terrain (e.g., Vegetation, Water, Urban).
@@ -14,8 +14,6 @@ This architecture is designed to fine-tune massive Geospatial Foundation Models 
 
 SpectraLoRA operates as a "Sidecar" to the frozen foundation model. It intercepts data flow to inject physics context without altering the pre-trained weights.
 
-
-
 ### Key Innovations
 1.  **Spectral Fingerprinting**: Calculates real-time physics indices (NDVI, NDWI, BSI) before the model runs.
 2.  **Mixture-of-Experts (MoE)**: A bank of specialized Low-Rank Adapters (e.g., one for forests, one for cities).
@@ -23,11 +21,20 @@ SpectraLoRA operates as a "Sidecar" to the frozen foundation model. It intercept
 
 ---
 
+## 🖼️ Visualizing Results
+
+SpectraLoRA is built to handle highly diverse, complex geographies—from arid deserts to dense coastal urban infrastructure. The library includes built-in batch prediction tools to visualize the AI's 4-class segmentation (Barren, Vegetation, Water, Urban) side-by-side with true-color satellite imagery.
+
+![SpectraLoRA Doha Prediction](experiments/predictions_output/pred_doha_001.png)
+*(Example output showing true RGB imagery alongside the SpectraLoRA physics-routed prediction)*
+
+---
+
 ## 📂 Project Structure
 
 ```text
 SpectraLoRA/
-├── spectra_lora/               # The Core Library
+├── spectra_lora/               # The Core Library Package
 │   ├── __init__.py             # API Exporter
 │   ├── config.py               # Phase 1: Global Configuration & Band Maps
 │   ├── spectral_ops.py         # Phase 1: The Physics Engine (NDVI/BSI Math)
@@ -36,12 +43,15 @@ SpectraLoRA/
 │   ├── model_wrapper.py        # Phase 3: The Surgeon (Model Loader & Injector)
 │   └── utils.py                # Helpers: GeoTIFF Loading & Visualization
 │
-├── experiments/                # Execution Scripts
+├── experiments/                # Execution Scripts & Testing
 │   ├── train.py                # Phase 4: Training Loop & Context Patching
 │   ├── evaluate.py             # Phase 4: Physics-Aware Evaluation Metrics
-|   └── demo_inference.py       # Phase 5: A simple script to test one image
+│   ├── predict.py              # Phase 5: Batch Inference & Visualization tool
+│   └── predictions_output/     # Saved side-by-side RGB vs AI prediction plots
 │
+├── setup.py                    # PyPI Installation Configuration
 ├── requirements.txt            # Dependencies
+├── LICENSE                     # MIT License
 └── README.md                   # This file
 
 ```
@@ -52,10 +62,14 @@ SpectraLoRA/
 
 ### Installation
 
+You can install the library directly via pip:
+
 ```bash
-pip install -r requirements.txt
+pip install spectralora
 
 ```
+
+*(Alternatively, clone the repository and run `pip install -r requirements.txt` for development).*
 
 ### Usage (Python API)
 
@@ -92,7 +106,7 @@ model = inject_spectra_lora(model)
 * The **Frozen** original weights.
 * The **Adapter Bank** (3 parallel LoRA experts).
 * The **Gating Network**.
-* **Logic**: .
+* **Logic**: $Output = Frozen(x) + \sum_{i} (Gate_i(z) \cdot Adapter_i(x))$
 
 
 
@@ -105,6 +119,7 @@ model = inject_spectra_lora(model)
 
 * **`train.py`**: The training engine. It includes a critical **Runtime Patch** (`patch_model_for_context`) that allows the model to access the global "Physics Context" without rewriting the original Prithvi code.
 * **`evaluate.py`**: A custom validator. Beyond standard **mIoU**, it calculates a **"Physics Violation Score"**—counting how many times the model predicted "Vegetation" in a pixel where the NDVI was clearly "Desert."
+* **`predict.py`**: A batch-processing visualization tool that iterates through `.tif` datasets and outputs RGB-vs-Prediction maps.
 
 ---
 
@@ -119,4 +134,6 @@ If you use this code for your research, please cite:
   year = {2026},
   url = {[https://github.com/MuniebA/SpectraLoRA](https://github.com/MuniebA/SpectraLoRA)}
 }
+
 ```
+
