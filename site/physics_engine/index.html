@@ -688,26 +688,26 @@
 
 
 <h1 id="the-physics-engine-spectral_ops">The Physics Engine (<code>spectral_ops</code>)<a class="headerlink" href="#the-physics-engine-spectral_ops" title="Permanent link">&para;</a></h1>
-<p>The Physics Engine is the heart of SpectraLoRA. It operates directly on raw, multi-spectral PyTorch tensors to extract physical meaning before the deep learning model sees the data. 
-The engine currently tracks 5 distinct indices, optimized for both dense vegetation and arid, desert environments.</p>
+<p>The Physics Engine is the heart of SpectraLoRA. It operates directly on raw, multi-spectral PyTorch tensors to extract physical meaning before the deep learning model sees the data. </p>
+<p>The engine currently tracks 5 distinct indices, optimized for both dense vegetation and arid, desert environments.</p>
 <h2 id="the-spectral-fingerprint">The Spectral Fingerprint<a class="headerlink" href="#the-spectral-fingerprint" title="Permanent link">&para;</a></h2>
 <p>The function <code>get_spectral_fingerprint(x, band_indices)</code> takes a satellite image tensor and returns a global context vector <span class="arithmatex">\(z\)</span> of shape <code>(Batch, 5)</code>. This vector acts as the input to the Gating Network.</p>
 <h3 id="1-ndvi-normalized-difference-vegetation-index">1. NDVI (Normalized Difference Vegetation Index)<a class="headerlink" href="#1-ndvi-normalized-difference-vegetation-index" title="Permanent link">&para;</a></h3>
-<p>The standard metric for identifying live green vegetation.
-$<span class="arithmatex">\(NDVI = \frac{NIR - Red}{NIR + Red + \epsilon}\)</span>$</p>
+<p>The standard metric for identifying live green vegetation.</p>
+<div class="arithmatex">\[NDVI = \frac{NIR - Red}{NIR + Red + \epsilon}\]</div>
 <h3 id="2-savi-soil-adjusted-vegetation-index">2. SAVI (Soil-Adjusted Vegetation Index)<a class="headerlink" href="#2-savi-soil-adjusted-vegetation-index" title="Permanent link">&para;</a></h3>
-<p>Crucial for arid regions (like Sudan or the Middle East) where bright sand reflects light and drowns out the chlorophyll signal of sparse shrubs.
-$<span class="arithmatex">\(SAVI = \frac{(NIR - Red) \cdot (1 + L)}{NIR + Red + L + \epsilon}\)</span>$
-<em>(Default <span class="arithmatex">\(L = 0.5\)</span>)</em></p>
+<p>Crucial for arid regions (like Sudan or the Middle East) where bright sand reflects light and drowns out the chlorophyll signal of sparse shrubs.</p>
+<div class="arithmatex">\[SAVI = \frac{(NIR - Red) \cdot (1 + L)}{NIR + Red + L + \epsilon}\]</div>
+<p><em>(Default <span class="arithmatex">\(L = 0.5\)</span>)</em></p>
 <h3 id="3-ndwi-normalized-difference-water-index">3. NDWI (Normalized Difference Water Index)<a class="headerlink" href="#3-ndwi-normalized-difference-water-index" title="Permanent link">&para;</a></h3>
-<p>Used to identify open water bodies.
-$<span class="arithmatex">\(NDWI = \frac{Green - NIR}{Green + NIR + \epsilon}\)</span>$</p>
+<p>Used to identify open water bodies.</p>
+<div class="arithmatex">\[NDWI = \frac{Green - NIR}{Green + NIR + \epsilon}\]</div>
 <h3 id="4-ndbi-normalized-difference-built-up-index">4. NDBI (Normalized Difference Built-up Index)<a class="headerlink" href="#4-ndbi-normalized-difference-built-up-index" title="Permanent link">&para;</a></h3>
-<p>Used to map urban areas, concrete, and asphalt.
-$<span class="arithmatex">\(NDBI = \frac{SWIR - NIR}{SWIR + NIR + \epsilon}\)</span>$</p>
+<p>Used to map urban areas, concrete, and asphalt.</p>
+<div class="arithmatex">\[NDBI = \frac{SWIR - NIR}{SWIR + NIR + \epsilon}\]</div>
 <h3 id="5-bsi-bare-soil-index">5. BSI (Bare Soil Index)<a class="headerlink" href="#5-bsi-bare-soil-index" title="Permanent link">&para;</a></h3>
-<p>Distinguishes "Bare Earth" (Sand/Dirt) from "Built Structures". This is essential to stop the AI from confusing desert dunes with concrete buildings.
-$<span class="arithmatex">\(BSI = \frac{(SWIR + Red) - (NIR + Blue)}{(SWIR + Red) + (NIR + Blue) + \epsilon}\)</span>$</p>
+<p>Distinguishes "Bare Earth" (Sand/Dirt) from "Built Structures". This is essential to stop the AI from confusing desert dunes with concrete buildings.</p>
+<div class="arithmatex">\[BSI = \frac{(SWIR + Red) - (NIR + Blue)}{(SWIR + Red) + (NIR + Blue) + \epsilon}\]</div>
 
 
 
@@ -767,6 +767,12 @@ $<span class="arithmatex">\(BSI = \frac{(SWIR + Red) - (NIR + Blue)}{(SWIR + Red
     
     
       <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

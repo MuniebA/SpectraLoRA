@@ -58,6 +58,13 @@ SpectraLoRA/
 
 ---
 
+## 📚 Documentation
+
+For a complete guide on how the Physics Engine works, detailed API references, and advanced usage tutorials, please visit our official documentation site:
+
+**[📖 Read the SpectraLoRA Documentation Here](https://MuniebA.github.io/SpectraLoRA/)**
+
+
 ## 🚀 Quick Start
 
 ### Installation
