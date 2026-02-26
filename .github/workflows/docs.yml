@@ -1,0 +1,34 @@
+name: Deploy MkDocs
+
+# 1. Trigger the action whenever you push to the 'main' branch
+on:
+  push:
+    branches:
+      - main
+
+# 2. Grant permission to push the built website
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Step A: Check out your repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      # Step B: Set up a Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+          
+      # Step C: Install the required MkDocs tools
+      - name: Install Dependencies
+        run: |
+          pip install mkdocs-material mkdocs
+          
+      # Step D: Build and Deploy the website
+      - name: Deploy to GitHub Pages
+        run: mkdocs gh-deploy --force
