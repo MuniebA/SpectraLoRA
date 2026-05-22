@@ -12,14 +12,15 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # ---------------------------
 
-# Import our library
+# Import our library (NOW WITH DB TRACKING!)
 from spectra_lora import (
     load_prithvi_model, 
     inject_spectra_lora, 
     SpectraConfig, 
     get_spectral_fingerprint,
     count_parameters,
-    SpectraLoRALayer
+    SpectraLoRALayer,
+    db
 )
 
 # -------------------------------------------------------------------------
@@ -58,9 +59,9 @@ class RealSatelliteDataset(Dataset):
         mask = torch.zeros((224, 224), dtype=torch.long)
         
         # STRICTER Thresholds to force the model to learn shapes
-        mask[ndvi > 0.25] = 1                            # Definite Vegetation
-        mask[ndwi > 0.15] = 2                            # Definite Water
-        mask[(ndbi > 0.05) & (mask == 0)] = 3            # Urban (if not already water/plant)
+        mask[ndvi > 0.25] = 1                            
+        mask[ndwi > 0.15] = 2                            
+        mask[(ndbi > 0.05) & (mask == 0)] = 3            
         
         return img_tensor, mask
 
@@ -111,34 +112,50 @@ def patch_model_for_context(model):
     return model
 
 # -------------------------------------------------------------------------
-# 4. The Training Loop
+# 4. The Training Loop (Now with MLOps Tracking)
 # -------------------------------------------------------------------------
 def train_spectra_lora():
     config = SpectraConfig()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"🚀 Starting Real-Data Training on {device}...")
 
-    # Load Full Model (Encoder + Decoder)
+    # Load Models
     encoder = load_prithvi_model()
     encoder = inject_spectra_lora(encoder)
     encoder = patch_model_for_context(encoder)
-    
     decoder = SimpleDecoder(num_classes=4)
-    
-    # Combine them
     model = nn.Sequential(encoder, decoder).to(device)
     
-    # Optimizer (Only train Adapters, Gate, and Decoder!)
+    # Optimizer
     trainable_params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = optim.AdamW(trainable_params, lr=3e-4)
+    current_lr = 3e-4
+    optimizer = optim.AdamW(trainable_params, lr=current_lr)
     criterion = nn.CrossEntropyLoss()
 
-    # Load Real Data
     dataset = RealSatelliteDataset("dataset_224x224")
-    dataloader = DataLoader(dataset, batch_size=2, shuffle=True) # Small batch for laptops
+    dataloader = DataLoader(dataset, batch_size=2, shuffle=True) 
+    
+    num_epochs = 20
+
+    # =========================================================================
+    # 🌟 NEW: STEP A - LOG EXPERIMENT START
+    # =========================================================================
+    configs_to_log = {
+        "model": {"backbone": "Prithvi-100M", "img_size": 224, "classes": 4},
+        "lora": {"rank": config.LORA_R, "alpha": config.LORA_ALPHA, "dropout": config.LORA_DROPOUT},
+        "physics": {"gate_dim": config.GATE_HIDDEN_DIM, "temp": config.GATE_TEMPERATURE, "experts": config.NUM_ADAPTERS},
+        "training": {"epochs": num_epochs, "batch_size": 2, "learning_rate": current_lr, "optimizer": "AdamW"}
+    }
+    
+    run_id = db.log_experiment_start(
+        run_name="doha_urban_mapping", 
+        device=str(device), 
+        configs=configs_to_log
+    )
+    print(f"📊 MLOps Tracker Active! Run ID: {run_id}")
+    # =========================================================================
     
     model.train()
-    num_epochs = 20
     
     for epoch in range(num_epochs):
         print(f"\n🌍 Epoch {epoch+1}/{num_epochs}")
@@ -147,16 +164,15 @@ def train_spectra_lora():
         for batch_idx, (images, masks) in enumerate(dataloader):
             images, masks = images.to(device), masks.to(device)
             
-            # 1. Calculate Physics
+            # Physics & Forward
             with torch.no_grad():
                 z = get_spectral_fingerprint(images, config.BAND_MAP)
             SpectraContext.current_z = z
             
-            # 2. Forward Pass
             optimizer.zero_grad()
-            logits = model(images) # Encoder -> Decoder -> [B, 3, 224, 224]
+            logits = model(images)
             
-            # 3. Backprop
+            # Backprop
             loss = criterion(logits, masks)
             loss.backward()
             optimizer.step()
@@ -165,11 +181,34 @@ def train_spectra_lora():
             
             print(f"   Batch {batch_idx+1}/{len(dataloader)}: Loss {loss.item():.4f} | Physics Context: NDVI={z[0,0]:.2f}")
 
-        print(f"✅ Epoch {epoch+1} Complete. Avg Loss: {epoch_loss/len(dataloader):.4f}")
+        avg_train_loss = epoch_loss / len(dataloader)
+        print(f"✅ Epoch {epoch+1} Complete. Avg Loss: {avg_train_loss:.4f}")
+
+        # =========================================================================
+        # 🌟 NEW: STEP B - LOG EPOCH METRICS
+        # =========================================================================
+        db.log_epoch_metrics(
+            run_id=run_id,
+            epoch=epoch + 1,
+            metrics={
+                "train_loss": avg_train_loss,
+                "learning_rate": current_lr
+                # Future: Add validation loss and mIoU here once a validation dataset is added!
+            }
+        )
+        # =========================================================================
         
     # Save the adapter weights
-    torch.save(model.state_dict(), "spectra_lora_weights.pth")
-    print("💾 Model weights saved to 'spectra_lora_weights.pth'")
+    final_weights_path = "spectra_lora_weights.pth"
+    torch.save(model.state_dict(), final_weights_path)
+    print(f"💾 Model weights saved to '{final_weights_path}'")
+
+    # =========================================================================
+    # 🌟 NEW: STEP C - LOG EXPERIMENT END
+    # =========================================================================
+    db.log_experiment_end(run_id=run_id, weights_path=final_weights_path, status="completed")
+    print("✅ Experiment fully logged to Database.")
+    # =========================================================================
 
 if __name__ == "__main__":
     train_spectra_lora()
