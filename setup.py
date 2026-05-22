@@ -29,6 +29,7 @@ setup(
         "transformers>=4.30.0",
         "huggingface-hub>=0.16.0",
         "matplotlib>=3.5.0",
-        "scikit-learn>=1.0.0"
+        "scikit-learn>=1.0.0",
+        "SQLAlchemy>=2.0.0"
     ],
 )

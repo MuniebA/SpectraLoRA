@@ -24,6 +24,9 @@ from .layers import SpectraLoRALayer
 # 5. Utilities
 from .utils import load_geotiff, count_parameters
 
+# 6. Database / MLOps Tracker
+from . import db
+
 # Define what gets imported when someone does 'from spectra_lora import *'
 __all__ = [
     "SpectraConfig",
@@ -32,5 +35,6 @@ __all__ = [
     "inject_spectra_lora",
     "SpectraLoRALayer",
     "load_geotiff",
-    "count_parameters"
+    "count_parameters",
+    "db"
 ]

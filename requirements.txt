@@ -8,3 +8,6 @@ matplotlib>=3.7.0
 scikit-learn>=1.3.0
 tqdm>=4.66.0
 pyyaml>=6.0
+
+# V0.2.0 DB
+SQLAlchemy>=2.0.0
