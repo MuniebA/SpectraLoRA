@@ -42,3 +42,8 @@ model = inject_spectra_lora(model)
 # 3. Model is ready for your PyTorch training loop!
 
 ```
+
+## Built-in Experiment Tracking
+By default, SpectraLoRA actively tracks your training loops. The moment you run an experiment, it creates a `spectralora_experiments.db` SQLite file in your local directory, saving your configuration, epoch durations, and validation metrics. 
+
+For enterprise users running cluster training, you can securely route this data to PostgreSQL by setting the `SPECTRALORA_DB_URL` environment variable. See the **MLOps Tracking** page for advanced usage.

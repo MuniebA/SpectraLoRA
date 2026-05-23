@@ -47,3 +47,19 @@ A Multi-Layer Perceptron (MLP) that maps the 5-dimensional physics vector to sof
 
 ### `count_parameters(model)`
 Prints a statistical breakdown of the model, showing the exact efficiency gains (e.g., "1.2% trainable parameters") achieved by the LoRA injection.
+
+---
+
+## MLOps Database Tracking (`spectra_lora.db`)
+
+### `log_experiment_start(run_name, device, configs)`
+Initializes a new database entry, auto-generating a unique UUID and logging hardware/hyperparameters.
+**Returns:** * `str`: The unique `run_id` required for subsequent logging.
+
+### `log_epoch_metrics(run_id, epoch, metrics)`
+Logs execution data for a specific epoch.
+**Parameters:**
+* `metrics` *(dict)*: Expects keys like `train_loss`, `val_loss`, `learning_rate`, `miou`, `pixel_accuracy`, and `physics_violations`.
+
+### `log_experiment_end(run_id, weights_path, status)`
+Finalizes the database entry, recording the time of completion and the path to the saved `.pth` weights.
