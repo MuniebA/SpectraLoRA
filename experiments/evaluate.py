@@ -57,9 +57,13 @@ class PhysicsEvaluator:
         iou_per_class = intersection / (union + 1e-6)
         miou = np.nanmean(iou_per_class)
         
+        # Calculate overall pixel accuracy
+        pixel_accuracy = np.sum(intersection) / (np.sum(self.confusion_matrix) + 1e-6)
+        
         return {
             "mIoU": miou,
             "Class_IoU": iou_per_class,
+            "Pixel_Accuracy": pixel_accuracy,
             "Physics_Violations_Count": self.physics_violations
         }
 
@@ -114,15 +118,13 @@ def evaluate_model():
     print("🔬 SPECTRALORA FINAL EVALUATION REPORT")
     print("="*45)
     print(f"✅ Mean IoU (Accuracy):      {results['mIoU']:.4f}")
+    print(f"🎯 Pixel Accuracy:          {results['Pixel_Accuracy']:.4f}")
     print(f"📊 Class-wise IoU:          {results['Class_IoU']}")
     print(f"⚠️ Physics Violations:      {results['Physics_Violations_Count']} pixels")
     print("-" * 45)
 
-    # ... (Your existing print statements are here) ...
-    print(f"✅ Physics Violations:     {results['Physics Violations']}")
-
     # =========================================================================
-    # 🌟 NEW: LOG EVALUATION TO MLOPS DATABASE
+    # 🌟 LOG EVALUATION TO MLOPS DATABASE
     # =========================================================================
     print("\n📊 Logging evaluation metrics to database...")
     
@@ -133,24 +135,18 @@ def evaluate_model():
         configs={"model": {"backbone": "Prithvi-100M", "mode": "evaluation"}}
     )
     
-    # 2. Helper to clean percentage strings (e.g., "85.4%" -> 0.854)
-    def clean_metric(val):
-        if isinstance(val, str):
-            return float(val.replace('%', '')) / 100.0
-        return float(val)
-
-    # 3. Log the specific metrics
+    # 2. Log the specific metrics
     db.log_epoch_metrics(
         run_id=run_id,
-        epoch=0, # Using epoch 0 to indicate this is a final evaluation, not a training step
+        epoch=0, # Using epoch 0 to indicate this is a final evaluation
         metrics={
-            "miou": clean_metric(results['mIoU']),
-            "pixel_accuracy": clean_metric(results['Pixel Accuracy']),
-            "physics_violations": int(results['Physics Violations'])
+            "miou": float(results['mIoU']),
+            "pixel_accuracy": float(results['Pixel_Accuracy']),
+            "physics_violations": int(results['Physics_Violations_Count'])
         }
     )
     
-    # 4. Close the run
+    # 3. Close the run
     db.log_experiment_end(run_id=run_id, status="eval_completed")
     print("✅ Evaluation fully logged to Database.")
 
