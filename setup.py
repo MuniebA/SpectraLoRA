@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="spectralora", # This is what people will type: pip install spectralora
-    version="0.1.0",
+    version="0.1.1",
     author="Munieb Abdelrahman",
     author_email="muniebawad@gmail.com",
     description="Physics-Aware Parameter-Efficient Fine-Tuning for Geospatial Foundation Models.",
