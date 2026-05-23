@@ -14,7 +14,8 @@ from spectra_lora import (
     inject_spectra_lora, 
     SpectraConfig, 
     get_spectral_fingerprint,
-    SpectraLoRALayer
+    SpectraLoRALayer,
+    db
 )
 import torch.nn as nn
 
@@ -116,6 +117,42 @@ def evaluate_model():
     print(f"📊 Class-wise IoU:          {results['Class_IoU']}")
     print(f"⚠️ Physics Violations:      {results['Physics_Violations_Count']} pixels")
     print("-" * 45)
+
+    # ... (Your existing print statements are here) ...
+    print(f"✅ Physics Violations:     {results['Physics Violations']}")
+
+    # =========================================================================
+    # 🌟 NEW: LOG EVALUATION TO MLOPS DATABASE
+    # =========================================================================
+    print("\n📊 Logging evaluation metrics to database...")
+    
+    # 1. Start an evaluation run in the database
+    run_id = db.log_experiment_start(
+        run_name="full_dataset_evaluation", 
+        device=str(device), 
+        configs={"model": {"backbone": "Prithvi-100M", "mode": "evaluation"}}
+    )
+    
+    # 2. Helper to clean percentage strings (e.g., "85.4%" -> 0.854)
+    def clean_metric(val):
+        if isinstance(val, str):
+            return float(val.replace('%', '')) / 100.0
+        return float(val)
+
+    # 3. Log the specific metrics
+    db.log_epoch_metrics(
+        run_id=run_id,
+        epoch=0, # Using epoch 0 to indicate this is a final evaluation, not a training step
+        metrics={
+            "miou": clean_metric(results['mIoU']),
+            "pixel_accuracy": clean_metric(results['Pixel Accuracy']),
+            "physics_violations": int(results['Physics Violations'])
+        }
+    )
+    
+    # 4. Close the run
+    db.log_experiment_end(run_id=run_id, status="eval_completed")
+    print("✅ Evaluation fully logged to Database.")
 
 if __name__ == "__main__":
     evaluate_model()

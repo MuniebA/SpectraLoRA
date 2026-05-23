@@ -118,7 +118,7 @@ def run_batch_predictions(input_folder, output_folder):
 
 if __name__ == "__main__":
     # Pointing to the Training Dataset
-    target_input_folder = "test_dataset_224x224"
+    target_input_folder = "dataset_224x224"
     
     # The folder where all the images will be saved
     target_output_folder = "predictions_output"
