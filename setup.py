@@ -30,6 +30,9 @@ setup(
         "huggingface-hub>=0.16.0",
         "matplotlib>=3.5.0",
         "scikit-learn>=1.0.0",
-        "SQLAlchemy>=2.0.0"
+        "SQLAlchemy>=2.0.0",
+        "GeoAlchemy2>=0.14.0",
+        "psycopg2-binary>=2.9.9",
+        "python-dotenv>=1.0.0"
     ],
 )

@@ -27,6 +27,9 @@ from .utils import load_geotiff, count_parameters
 # 6. Database / MLOps Tracker
 from . import db
 
+# 7. Spatial Data Ingestion
+from .ingest import ingest_satellite_folder
+
 # Define what gets imported when someone does 'from spectra_lora import *'
 __all__ = [
     "SpectraConfig",
@@ -36,5 +39,6 @@ __all__ = [
     "SpectraLoRALayer",
     "load_geotiff",
     "count_parameters",
-    "db"
+    "db",
+    "ingest_satellite_folder"
 ]
