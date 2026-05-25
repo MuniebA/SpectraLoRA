@@ -24,31 +24,62 @@ from spectra_lora import (
 )
 
 # -------------------------------------------------------------------------
-# 1. Real Satellite Dataset & Pseudo-Labeler
+# 1. Real Satellite Dataset & Pseudo-Labeler (v0.2.0 Spatial Hybrid)
 # -------------------------------------------------------------------------
 class RealSatelliteDataset(Dataset):
-    """ Loads real 224x224 .tif chips and creates physics-based training masks """
-    def __init__(self, folder_path="dataset_224x224"):
+    """ Loads satellite chips via PostGIS spatial queries, or falls back to local folders. """
+    def __init__(self, folder_path="dataset_224x224", spatial_filter=None):
         self.folder_path = folder_path
-        if not os.path.exists(folder_path):
-            raise RuntimeError(f"Folder '{folder_path}' not found! Run create_dataset.py first.")
+        self.files = []
+        self.use_spatial = False
+
+        # --- A. Attempt Spatial Database Connection ---
+        db_url = os.getenv("SPECTRALORA_DB_URL", "")
+        if db_url.startswith("postgresql"):
+            try:
+                database = db.SessionLocal()
+                query = database.query(db.SatelliteChip)
+                
+                # Apply dynamic filters (e.g., only low cloud cover)
+                if spatial_filter and "max_cloud_cover" in spatial_filter:
+                    query = query.filter(db.SatelliteChip.cloud_cover <= spatial_filter["max_cloud_cover"])
+                
+                # If we had a bounding box, we would use PostGIS ST_Intersects here!
+                
+                results = query.all()
+                # Extract just the filenames from the database records
+                self.files = [os.path.basename(chip.file_path) for chip in results]
+                database.close()
+                
+                if len(self.files) > 0:
+                    print(f"🌍 Spatial DB Active: Loaded {len(self.files)} chips from PostGIS catalog.")
+                    self.use_spatial = True
+            except Exception as e:
+                print(f"⚠️ Spatial query failed, triggering local fallback. (Error: {e})")
+        
+        # --- B. The Zero-Friction Fallback (v0.1.1 Behavior) ---
+        if not self.use_spatial:
+            if not os.path.exists(folder_path):
+                raise RuntimeError(f"Folder '{folder_path}' not found! Run create_dataset.py first.")
+                
+            self.files = [f for f in os.listdir(folder_path) if f.endswith('.tif')]
+            print(f"📁 Local Fallback Active: Loaded {len(self.files)} chips directly from '{folder_path}'.")
             
-        self.files = [f for f in os.listdir(folder_path) if f.endswith('.tif')]
         if len(self.files) == 0:
-            raise RuntimeError(f"No .tif files found in {folder_path}!")
+            raise RuntimeError(f"No valid .tif files found to load!")
             
     def __len__(self):
         return len(self.files)
         
     def __getitem__(self, idx):
+        # The loading logic remains exactly the same
         path = os.path.join(self.folder_path, self.files[idx])
         with rasterio.open(path) as src:
             img = src.read().astype(np.float32) / 10000.0 
             
         img_tensor = torch.from_numpy(img)
         
-        # --- SMARTER 4-CLASS PSEUDO-LABELS ---
-        # 0: Barren, 1: Vegetation, 2: Water, 3: Urban
+        # --- 4-CLASS PSEUDO-LABELS ---
         blue, green, red = img_tensor[0], img_tensor[1], img_tensor[2]
         nir, swir1 = img_tensor[3], img_tensor[4]
         
@@ -57,8 +88,6 @@ class RealSatelliteDataset(Dataset):
         ndbi = (swir1 - nir) / (swir1 + nir + 1e-8)
         
         mask = torch.zeros((224, 224), dtype=torch.long)
-        
-        # STRICTER Thresholds to force the model to learn shapes
         mask[ndvi > 0.25] = 1                            
         mask[ndwi > 0.15] = 2                            
         mask[(ndbi > 0.05) & (mask == 0)] = 3            
@@ -132,10 +161,14 @@ def train_spectra_lora():
     optimizer = optim.AdamW(trainable_params, lr=current_lr)
     criterion = nn.CrossEntropyLoss()
 
-    dataset = RealSatelliteDataset("dataset_224x224")
+    # Pass a spatial filter to only load high-quality, low-cloud images
+    dataset = RealSatelliteDataset(
+        "dataset_224x224", 
+        spatial_filter={"max_cloud_cover": 5.0} # PostGIS will enforce this!
+    )
     dataloader = DataLoader(dataset, batch_size=2, shuffle=True) 
     
-    num_epochs = 20
+    num_epochs = 5
 
     # =========================================================================
     # 🌟 NEW: STEP A - LOG EXPERIMENT START
