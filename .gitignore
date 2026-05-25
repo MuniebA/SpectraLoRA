@@ -10,6 +10,5 @@ data_creation
 dist
 spectralora.egg-info
 2.0.0
-predictions_output_old
-predictions_output*
+predictions_output
 .env

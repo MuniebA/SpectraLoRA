@@ -2,8 +2,10 @@ import os
 import json
 import uuid
 from datetime import datetime
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, JSON, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
+from geoalchemy2 import Geometry
 
 """
 SpectraLoRA MLOps Database Tracker
@@ -11,6 +13,9 @@ SpectraLoRA MLOps Database Tracker
 Automatically logs experiments to a local SQLite file, or connects to a 
 PostgreSQL server if the SPECTRALORA_DB_URL environment variable is set.
 """
+
+# 0. Load Environment Variables
+load_dotenv()
 
 # 1. The Fallback Logic
 DB_URL = os.getenv("SPECTRALORA_DB_URL", "sqlite:///spectralora_experiments.db")
@@ -59,6 +64,26 @@ class EpochMetric(Base):
     miou = Column(Float, nullable=True)
     pixel_accuracy = Column(Float, nullable=True)
     physics_violations = Column(Integer, nullable=True)
+
+# geospatial data catalog
+class SatelliteChip(Base):
+    """
+    The Geospatial Data Catalog.
+    Stores the exact GPS bounding box of every satellite image.
+    Requires PostgreSQL + PostGIS.
+    """
+    __tablename__ = "spectralora_chips"
+    
+    chip_id = Column(String, primary_key=True, index=True)
+    file_path = Column(String, nullable=False, unique=True)
+    
+    # Metadata extracted via rasterio
+    acquisition_date = Column(DateTime, nullable=True)
+    cloud_cover = Column(Float, nullable=True)
+    avg_ndvi = Column(Float, nullable=True)
+    
+    # The crucial spatial column (EPSG:4326 is standard Latitude/Longitude)
+    geom = Column(Geometry('POLYGON', srid=4326), nullable=False)
 
 # 3. Auto-Generate the Schema (Creates tables if they don't exist)
 Base.metadata.create_all(bind=engine)

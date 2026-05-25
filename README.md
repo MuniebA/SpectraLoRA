@@ -27,7 +27,7 @@ SpectraLoRA operates as a "Sidecar" to the frozen foundation model. It intercept
 
 SpectraLoRA is built to handle highly diverse, complex geographies—from arid deserts to dense coastal urban infrastructure. The library includes built-in batch prediction tools to visualize the AI's 4-class segmentation (Barren, Vegetation, Water, Urban) side-by-side with true-color satellite imagery.
 
-![SpectraLoRA Doha Prediction](experiments/predictions_output/pred_doha_001.png)
+![SpectraLoRA Doha Prediction](experiments/predictions_output_old/pred_doha_001.png)
 *(Example output showing true RGB imagery alongside the SpectraLoRA physics-routed prediction)*
 
 ---
