@@ -19,6 +19,7 @@ SpectraLoRA operates as a "Sidecar" to the frozen foundation model. It intercept
 2.  **Mixture-of-Experts (MoE)**: A bank of specialized Low-Rank Adapters (e.g., one for forests, one for cities).
 3.  **Dynamic Gating**: A lightweight router that blends adapters based on the material properties of the image patch.
 4.  **Built-in MLOps Tracking**: Automatically logs hyperparameters, training loss, and GeoAI-specific metrics (mIoU, Physics Violations) to local SQLite or enterprise PostgreSQL databases.
+5.  **Geospatial Data Catalog**: Leverages PostGIS to ingest, index, and dynamically filter satellite chips using precise Earth coordinates (EPSG:4326) directly within the PyTorch training loop.
 
 ---
 
@@ -116,6 +117,7 @@ model = inject_spectra_lora(model)
 * **`model_wrapper.py`**: The "Surgeon." It downloads the Prithvi architecture code dynamically from Hugging Face (since it's not in standard `transformers`), loads the weights, and recursively swaps Attention layers with `SpectraLoRALayer`.
 * **`__init__.py`**: Exposes the high-level API so you can import functions cleanly.
 * **`db.py`**: The MLOps database engine. Utilizes SQLAlchemy to auto-generate tracking schemas and securely log experiment data without forcing users to write manual SQL.
+* **`ingest.py`**: The Spatial Crawler. Automatically extracts geographic bounding boxes and metadata (like cloud cover) from raw `.tif` files and populates the PostGIS spatial catalog.
 
 ### 4. Experiments (`experiments/`)
 

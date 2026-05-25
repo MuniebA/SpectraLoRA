@@ -47,3 +47,20 @@ model = inject_spectra_lora(model)
 By default, SpectraLoRA actively tracks your training loops. The moment you run an experiment, it creates a `spectralora_experiments.db` SQLite file in your local directory, saving your configuration, epoch durations, and validation metrics. 
 
 For enterprise users running cluster training, you can securely route this data to PostgreSQL by setting the `SPECTRALORA_DB_URL` environment variable. See the **MLOps Tracking** page for advanced usage.
+
+
+## Spatially-Aware Training (v0.2.0+)
+SpectraLoRA goes beyond traditional folder-based data loading. By connecting to a PostGIS database, you can dynamically filter your training data based on geographic bounds, acquisition dates, and cloud cover.
+
+![Spatial Ingestion Workflow](assets/spatial_workflow.png)
+*(Drop an architecture diagram in your assets folder showing raw images going into PostGIS!)*
+
+To build your catalog, simply point the ingestion engine at your satellite imagery:
+```python
+from spectra_lora import ingest_satellite_folder
+
+# Extracts GPS coordinates and saves them to PostGIS
+ingest_satellite_folder("dataset_224x224")
+```
+
+See the Spatial Catalog page for a full guide on querying this data during training.

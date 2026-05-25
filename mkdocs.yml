@@ -34,6 +34,7 @@ nav:
   - The Physics Engine: physics_engine.md
   - API Reference: api_reference.md
   - MLOps Tracking: mlops_tracking.md
+  - Spatial Catalog: spatial_catalog.md
 
 markdown_extensions:
   - pymdownx.arithmatex:

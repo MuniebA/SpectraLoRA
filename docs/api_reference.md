@@ -63,3 +63,14 @@ Logs execution data for a specific epoch.
 
 ### `log_experiment_end(run_id, weights_path, status)`
 Finalizes the database entry, recording the time of completion and the path to the saved `.pth` weights.
+
+
+---
+
+## Spatial Data Ingestion (`spectra_lora.ingest`)
+
+### `ingest_satellite_folder(folder_path)`
+Scans a directory of `.tif` files, extracts their native bounding boxes, reprojects them to standard GPS coordinates (EPSG:4326), and saves the polygons to the PostGIS `spectralora_chips` table. It also calculates and stores the average NDVI and cloud cover metadata.
+
+**Parameters:**
+* `folder_path` *(str)*: The relative or absolute path to the folder containing satellite imagery.
