@@ -5,6 +5,11 @@ import rasterio
 from rasterio.warp import transform_bounds
 import numpy as np
 
+if 'PROJ_LIB' in os.environ:
+    del os.environ['PROJ_LIB']
+if 'PROJ_DATA' in os.environ:
+    del os.environ['PROJ_DATA']
+
 # Import our Database and Configuration
 from spectra_lora.db import SessionLocal, SatelliteChip
 from spectra_lora.config import SpectraConfig
